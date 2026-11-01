@@ -8,17 +8,37 @@ summary = "Xiaomi 13 (fuxi, SM8550). Clean Format 2 port targeting iPadOS 17.7.1
 
 [[area]]
 id = "configuration"
-status = "planned"
+status = "host-verified"
 components = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink", "DarwinBoot"]
 paths = ["board.toml", "feeds.toml", "configs/**", ".gitmodules", ".github/**", ".gitignore"]
-inputs = ["Identify the configuration hardware, resources and existing component interfaces for this board."]
-configuration = ["Record the board.toml fields, DTS properties and defconfig values used for configuration."]
-procedure = ["Follow the configuration stage in the porting guide and record the actual commands."]
-findings = ["Collect the first configuration observation, its cause when established, and the resulting implementation decision."]
+inputs = ["Xiaomi 13 (fuxi), SM8550, owner's unlocked unit, 12 GB RAM + 256 GB storage (same specification as mouse233's device-verified unit).", "iPad_Pro_HFR_17.7.11_21H461_Restore.ipsw (iPad7,1) as the OS payload, from the upstream OS profile.", "UniXNU main @ 5e839fb, UniXNU-sm8550-common pinned at a9f45dc in feeds.toml."]
+configuration = ["board.toml: name fuxi, soc SM8550, soc_source sm8550, os_profile ipados-17.7.11-21H461, kit fuxi; components ArmDTPlatform, ArmCpu, SoftwareAES, XnuPrelink, DarwinBoot (M1 minimal set).", "board.toml [userdata]: first_lba 0x2F7840, last_lba 0x3AFC3FA, lba_bytes 4096, adopted from mouse233 for the same 12+256 specification; verify against this unit's own GPT before any write.", ".github/workflows/package.yml and .github/workflows/porting-record.yml are the template copies, added 2026-11-01 (commits 2c13613, a408c63) through the GitHub web UI because the Muse GitHub App has no workflows permission."]
+procedure = ["./unixnu defconfig fuxi_defconfig -D ../UniXNU-fuxi", "./unixnu fetch", "./unixnu status --json", "./unixnu tree", "python3 scripts/porting-record.py check --device ../UniXNU-fuxi", "GitHub macOS build workflow (kkkpc/UniXNU fork), steps=kernel, run 41287825448."]
+findings = ["Host resolution passes end to end: profiles, component sources, overrides and patch order (arch, soc, os, device) resolve as intended; the assembled tree contains kits/fuxi; unixnu.lock pins xnu d8b8029 and sm8550 a9f45dc.", "CI kernel build succeeds: the macOS build run's Build kernel step completed in 8m 8s and its summary records kernel=success. The run's overall Failure conclusion comes only from the workflow's own Summary step crashing on `xcodebuild -version | head -n 1` (broken pipe, exit 134) — an upstream workflow defect, not a board defect.", "The first Device documentation run (41287869618) failed its base check because the workflow-file commits did not update this record; this configuration update is that fix."]
 completion = ["All source pins resolve; every selected component has a record; status shows the intended overrides and patch order."]
-limits = ["Hardware inputs and implementation are pending for this example board."]
-next_action = ["Inventory the required configuration inputs before implementation."]
-evidence = []
+limits = ["M1 minimal component set only; storage, display, input and GPU components are added per subsystem in porting order.", "The package workflow is still the template copy (firmware repository placeholder) and is not yet runnable."]
+next_action = ["Add the storage components (RamBlock, ShengUfs) and their archive recipes for the M2/M3 RAM-root stage."]
+
+[[area.evidence]]
+kind = "host"
+reference = "https://github.com/kkkpc/UniXNU/actions/runs/41287825448"
+command = "macOS build workflow, steps=kernel, device kkkpc/UniXNU-fuxi, defconfig fuxi_defconfig"
+revision = "a408c635b87327c659fd73848ad74837279a13ce"
+result = "Build kernel succeeded in 8m 8s; run summary records kernel=success. Run conclusion Failure is only the Summary step's xcodebuild broken-pipe crash (exit 134)."
+
+[[area.evidence]]
+kind = "host"
+reference = "board.toml"
+command = "./unixnu defconfig fuxi_defconfig -D ../UniXNU-fuxi && ./unixnu fetch && ./unixnu status --json && ./unixnu tree"
+revision = "aee06a785017892f5c0605efc8d98e458ef5ff3c"
+result = "All commands exit 0; status resolves fuxi / ipados-17.7.11-21H461 / sm8550 pin a9f45dc; assembled tree contains kits/fuxi."
+
+[[area.evidence]]
+kind = "host"
+reference = ".github/workflows/porting-record.yml"
+command = "python3 scripts/porting-record.py check --device ../UniXNU-fuxi"
+revision = "aee06a785017892f5c0605efc8d98e458ef5ff3c"
+result = "13 structured areas checked (pass) locally; the CI base check failed on the workflow-file commits until this record update."
 
 [[area]]
 id = "firmware"
