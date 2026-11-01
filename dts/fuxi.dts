@@ -1,0 +1,49 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/dts-v1/;
+/include/ "sm8550.dtsi"
+
+/ {
+    model = "Xiaomi 13";
+    compatible = "xiaomi,fuxi", "qcom,sm8550";
+
+    // SMEM RAM table size observed on fuxi (mouse233 board.toml dram_size).
+    // The ADT owned-memory window is set separately in board.toml [payload.adt].
+    memory@80000000 {
+        device_type = "memory";
+        reg = <0 0x80000000 0 0x80000000>;
+    };
+
+    reserved-memory {
+        #address-cells = <2>;
+        #size-cells = <2>;
+        ranges;
+        // fuxi stock device tree carries this same splash region
+        // (mouse233: reg = <0x0 0xb8000000 0x0 0x2b00000>).
+        splash_region: framebuffer@b8000000 {
+            label = "cont_splash_region";
+            reg = <0 0xb8000000 0 0x2b00000>;
+            no-map;
+        };
+    };
+};
+
+// SM8550 topology in sm8550.dtsi: cpu0-2 Cortex-A510, cpu3-4 A715,
+// cpu5-6 A710, cpu7 Cortex-X3. Same cluster split sheng records:
+// A510 cores as the E cluster, the rest as P.
+&cpu0 { unixnu,cluster-type = "E"; };
+&cpu1 { unixnu,cluster-type = "E"; };
+&cpu2 { unixnu,cluster-type = "E"; };
+&cpu3 { unixnu,cluster-type = "P"; };
+&cpu4 { unixnu,cluster-type = "P"; };
+&cpu5 { unixnu,cluster-type = "P"; };
+&cpu6 { unixnu,cluster-type = "P"; };
+&cpu7 { unixnu,cluster-type = "P"; };
+
+&ufs { status = "okay"; };
+&ufsphy { status = "okay"; };
+
+// GPU/GMU stay disabled for M1-M3 (RAM-root first). Enable with the
+// Adreno740/Sm8550Platform component selection in the GPU stage.
+// &gpu { status = "okay"; };
+// &gmu { status = "okay"; };
+// &gpu_smmu { status = "okay"; };
