@@ -14,7 +14,7 @@ paths = ["board.toml", "feeds.toml", "configs/**", ".gitmodules", ".github/**", 
 inputs = ["Xiaomi 13 (fuxi), SM8550, owner's unlocked unit, 12 GB RAM + 256 GB storage (same specification as mouse233's device-verified unit).", "iPad_Pro_HFR_17.7.11_21H461_Restore.ipsw (iPad7,1) as the OS payload, from the upstream OS profile.", "UniXNU main @ 5e839fb, UniXNU-sm8550-common pinned at a9f45dc in feeds.toml."]
 configuration = ["board.toml: name fuxi, soc SM8550, soc_source sm8550, os_profile ipados-17.7.11-21H461, kit fuxi; components ArmDTPlatform, ArmCpu, SoftwareAES, XnuPrelink, DarwinBoot (M1 minimal set).", "board.toml [userdata]: first_lba 0x2F7840, last_lba 0x3AFC3FA, lba_bytes 4096, adopted from mouse233 for the same 12+256 specification; verify against this unit's own GPT before any write.", ".github/workflows/package.yml and .github/workflows/porting-record.yml are the template copies, added 2026-11-01 (commits 2c13613, a408c63) through the GitHub web UI because the Muse GitHub App has no workflows permission."]
 procedure = ["./unixnu defconfig fuxi_defconfig -D ../UniXNU-fuxi", "./unixnu fetch", "./unixnu status --json", "./unixnu tree", "python3 scripts/porting-record.py check --device ../UniXNU-fuxi", "GitHub macOS build workflow (kkkpc/UniXNU fork), steps=kernel, run 41287825448."]
-findings = ["Host resolution passes end to end: profiles, component sources, overrides and patch order (arch, soc, os, device) resolve as intended; the assembled tree contains kits/fuxi; unixnu.lock pins xnu d8b8029 and sm8550 a9f45dc.", "CI kernel build succeeds: the macOS build run's Build kernel step completed in 8m 8s and its summary records kernel=success. The run's overall Failure conclusion comes only from the workflow's own Summary step crashing on `xcodebuild -version | head -n 1` (broken pipe, exit 134) — an upstream workflow defect, not a board defect.", "The first Device documentation run (41287869618) failed its base check because the workflow-file commits did not update this record; this configuration update is that fix."]
+findings = ["Host resolution passes end to end: profiles, component sources, overrides and patch order (arch, soc, os, device) resolve as intended; the assembled tree contains kits/fuxi; unixnu.lock pins xnu d8b8029 and sm8550 a9f45dc.", "CI kernel build succeeds: the macOS build run's Build kernel step completed in 8m 8s and its summary records kernel=success. The run's overall Failure conclusion comes only from the workflow's own Summary step crashing on `xcodebuild -version | head -n 1` (broken pipe, exit 134) — an upstream workflow defect, not a board defect.", "The first Device documentation run (41287869618) failed its base check because the workflow-file commits did not update this record; this configuration update is that fix.", "Firmware source pinned 2026-11-01: mouse233/uefi-fuxi branch feat/ramdisk-test @ 32b3b57e4bb542136e1a932062e5b10c81b5f287, recorded in the board.toml [firmware] provenance comment."]
 completion = ["All source pins resolve; every selected component has a record; status shows the intended overrides and patch order."]
 limits = ["M1 minimal component set only; storage, display, input and GPU components are added per subsystem in porting order.", "The package workflow is still the template copy (firmware repository placeholder) and is not yet runnable."]
 next_action = ["Add the storage components (RamBlock, ShengUfs) and their archive recipes for the M2/M3 RAM-root stage."]
@@ -42,17 +42,30 @@ result = "13 structured areas checked (pass) locally; the CI base check failed o
 
 [[area]]
 id = "firmware"
-status = "planned"
+status = "host-verified"
 components = []
 paths = ["proprietary-files.txt", "scripts/extract-files.py", "scripts/gen-touch-firmware.py"]
-inputs = ["Identify the firmware and boot hardware, resources and existing component interfaces for this board."]
-configuration = ["Record the board.toml fields, DTS properties and defconfig values used for firmware and boot."]
-procedure = ["Follow the firmware and boot stage in the porting guide and record the actual commands."]
-findings = ["Collect the first firmware and boot observation, its cause when established, and the resulting implementation decision."]
+inputs = ["mouse233/uefi-fuxi, branch feat/ramdisk-test @ 32b3b57e4bb542136e1a932062e5b10c81b5f287: fuxiPkg (Mu-Silicium), Resources/Configs/fuxi.toml, Resources/DTBs/fuxi.dtb (stock Qualcomm DTB for this board), Resources/Scripts/mkbootimg.py.", "FD layout from the device's own xbl_config per the uefi config audit: FD_BASE 0xA7100000, FD_SIZE 0x300000."]
+configuration = ["board.toml [firmware]: config fuxi, dsc Platforms/Xiaomi/fuxiPkg/fuxi.dsc, fd Build/fuxiPkg/{target}_CLANGPDB/FV/SILICIUM_UEFI.fd, defines ENABLE_SECUREBOOT=1, DEVICE_MODEL=fuxi, MEMORY_PROTECTION=TRUE.", "Boot image profile (uefi Resources/Configs/fuxi.toml): Android boot header v3, os_version 17.0.0, os_patch_level 2026-07, measured from this phone model's stock boot_b header; the DTB appended to the image is the stock fuxi DTB, not the XNU-side dts/fuxi.dts."]
+procedure = ["./unixnu build firmware -D ../UniXNU-fuxi --uefi ../uefi-fuxi (EDK2 DEBUG CLANGPDB)", "./unixnu bootimg -D ../UniXNU-fuxi --uefi ../uefi-fuxi --dtb ../uefi-fuxi/Resources/DTBs/fuxi.dtb", "mkbootimg re-pack with --header_version 3 --os_version 17.0.0 --os_patch_level 2026-07 to match the stock container metadata, then a manual v3 unpack verification."]
+findings = ["Firmware builds clean on the Linux host: SILICIUM_UEFI.fd is exactly 0x300000 bytes as the config requires.", "fuxi's ABL profile is Android boot header v3 (Xiaomi v3/v4 ABL path, per the uefi config audit). UniXNU's layered bootimg verifier parses only v0 headers and rejects the image with 'boot image header does not match the requested parameters' even though mkbootimg produced it correctly; a manual v3 unpack verifies byte-exact round-trips of gzip(BootShim + FD) and the appended stock DTB. Forcing the profile to v0 is explicitly warned against in the uefi config without bootloader evidence, so v3 stands.", "The boot image carries an empty ramdisk: no payload yet, so this image is a firmware smoke test only (UEFI on screen); DarwinBoot entries arrive with the payload stage."]
 completion = ["Firmware image builds, enters UniXNU, publishes the framebuffer and preserves the documented memory reservations."]
-limits = ["Hardware inputs and implementation are pending for this example board."]
-next_action = ["Inventory the required firmware and boot inputs before implementation."]
-evidence = []
+limits = ["Not yet run on this project's own unit: the first fastboot boot test is pending (bench Mac, RAM only). ABL acceptance of the v3 image and the receiver window behavior of this build are unproven on this hardware until that test.", "The layered driver's bootimg verification cannot validate v3 images (v0-only parser); images are verified by manual v3 unpack until upstream grows v3 support."]
+next_action = ["fastboot boot fuxi-uefi-boot-v3.img on the owner's unit from the bench Mac; photograph the screen and record the reached stage here."]
+
+[[area.evidence]]
+kind = "host"
+reference = "https://github.com/mouse233/uefi-fuxi"
+command = "./unixnu build firmware -D ../UniXNU-fuxi --uefi ../uefi-fuxi"
+revision = "32b3b57e4bb542136e1a932062e5b10c81b5f287"
+result = "Exit 0. SILICIUM_UEFI.fd built (3,145,728 bytes = FD_SIZE 0x300000 at FD_BASE 0xA7100000), EDK2 DEBUG CLANGPDB, submodules at the checkout's pins."
+
+[[area.evidence]]
+kind = "host"
+reference = "https://github.com/mouse233/uefi-fuxi/blob/feat/ramdisk-test/Resources/Configs/fuxi.toml"
+command = "./unixnu bootimg --dtb ../uefi-fuxi/Resources/DTBs/fuxi.dtb, re-packed with mkbootimg --header_version 3 --os_version 17.0.0 --os_patch_level 2026-07; manual v3 unpack in Python (struct + zlib)"
+revision = "32b3b57e4bb542136e1a932062e5b10c81b5f287"
+result = "fuxi-uefi-boot-v3.img: 1,843,200 bytes, sha256 eb9f8855758febfdeebbc930ee7bde0bae7064713d3902377521eecf8cb24564. Header v3, header_size 1580, kernel_size 1,836,462; gzip stream ends exactly at the appended DTB, decompresses to BootShim (192 bytes) + the built FD byte-identical, appended DTB byte-identical to stock fuxi.dtb."
 
 [[area]]
 id = "cpu"
