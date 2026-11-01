@@ -11,6 +11,7 @@ device (an unlocked Xiaomi 13 owned by the project owner).
 | UniXNU/UniXNU | 5e839fb26be0332a521e870b6bf0bcdf82520409 (audited 2026-11-01) | Build driver, template, OS profile ipados-17.7.11-21H461, components catalog |
 | UniXNU/UniXNU-sm8550-common | a9f45dc60c035084b95463781538380f4c3606c9 (feeds.toml pin; same as sheng) | sm8550.dtsi, sm8550.config, SoC XNU patches, Sm8550Platform kit |
 | UniXNU/UniXNU-sheng | 28b30285768e04008ac525c04182e245bfac441e | Reference integration only: DTS cluster split, firmware package list shape |
+| mouse233/uefi-fuxi | 32b3b57e4bb542136e1a932062e5b10c81b5f287 (branch feat/ramdisk-test, pinned 2026-11-01) | Mu-Silicium UEFI firmware (fuxiPkg, USB RAM receiver), stock fuxi DTB (Resources/DTBs/fuxi.dtb), mkbootimg; FD base/size from fuxi's own xbl_config per Resources/Configs/fuxi.toml |
 
 ## mouse233/unixnu-fuxi @ 4545692515a54d8bfc94597a7ba72fd9b25bead5
 
