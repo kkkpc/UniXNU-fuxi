@@ -1,0 +1,7 @@
+[[source]]
+name = "sm8550"
+kind = "soc"
+git = "https://github.com/UniXNU/UniXNU-sm8550-common"
+# Reviewed pin: same commit UniXNU-sheng pins and the current HEAD audited
+# locally on 2026-11-01.
+commit = "a9f45dc60c035084b95463781538380f4c3606c9"
