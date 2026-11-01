@@ -32,9 +32,9 @@ source = "device:dts/fuxi.dts"
 include_dirs = ["soc:dts"]
 
 [firmware]
-# From mouse233/unixnu-fuxi board.toml [firmware]: the fuxiPkg in uefi-fuxi
-# (mouse233/uefi-fuxi, also hanzi123-bilp/uefi-fuxi). PENDING: pin the exact
-# uefi-fuxi revision this project builds against.
+# From mouse233/unixnu-fuxi board.toml [firmware]: the fuxiPkg in uefi-fuxi.
+# PINNED 2026-11-01: mouse233/uefi-fuxi, branch feat/ramdisk-test (the USB RAM
+# receiver branch), commit 32b3b57e4bb542136e1a932062e5b10c81b5f287.
 config = "fuxi"
 dsc = "Platforms/Xiaomi/fuxiPkg/fuxi.dsc"
 fd = "Build/fuxiPkg/{target}_CLANGPDB/FV/SILICIUM_UEFI.fd"
